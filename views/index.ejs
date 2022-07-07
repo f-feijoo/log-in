@@ -2,6 +2,13 @@
 <html lang="en">
 <%- include("templates/head")   %>
 <body>
+    <% if(saludar) { %>
+    <%- include("templates/logout")   %>
+    <% } else { if (user == 'formulario') { %>
+    <%- include("templates/formulario-login")   %>
+    <% } else {  %>
+    <%- include("templates/login")   %>   
+    <% }} %>
     <div class="container mt-5">
         <form onsubmit="return addInfo()">
             <div class="row">

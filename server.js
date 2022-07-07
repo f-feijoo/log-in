@@ -6,6 +6,10 @@ const { knexMySql } = require("./db/db.js");
 const Mensaje = require("./models/Mensajes");
 const { normalize, schema } = require("normalizr");
 const { inspect } = require('util')
+const session = require('express-session')
+
+const MongoStore = require('connect-mongo')
+const advancedOptions = { useNewUrlParser: true, useUnifiedTopology: true }
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +25,19 @@ app.use(express.static(__dirname + "/public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", productos);
+app.use(session({
+  store: MongoStore.create({ 
+      //En Atlas connect App :  Make sure to change the node version to 2.2.12:
+      mongoUrl: 'mongodb://anyone:1svhFxNnP6jwqW8F@proyecto-final-shard-00-00.obuuu.mongodb.net:27017,proyecto-final-shard-00-01.obuuu.mongodb.net:27017,proyecto-final-shard-00-02.obuuu.mongodb.net:27017/?ssl=true&replicaSet=atlas-xzhi9f-shard-0&authSource=admin&retryWrites=true&w=majority',
+      mongoOptions: advancedOptions
+  }),
+  secret: 'shhhhhhhhhhhhhhhhhhhhh',
+  resave: false,
+  saveUninitialized: false ,
+  cookie: {
+      maxAge: 600000
+  } 
+}))
 
 const autorSchema = new schema.Entity('autores')
 
@@ -90,7 +107,7 @@ io.on("connection", (socket) => {
       console.log(inspect(objeto,false,12,true))
     }
   // print(mensajesNormalized)
-    socket.emit("mensajes", mensajesNormalized);
+    socket.emit("mensajes", chat); // Reemplazar chat por mensajesNormalized para usar normalizacion y ver el frontend
   });
 
   socket.on("Msn", (x) => {
@@ -117,12 +134,80 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/", (req, res) => {
+
+//  ---------- LOGIN ----------
+
+// A la hora de renderizar los archivos EJS se pasan parametros(user y saludar) para logica dentro de EJS(Varian los templates)
+
+
+// ---------- Funcion para autorizar, si estas logeado te manda a la ruta principal, sino a la ruta /login ----------
+
+function auth(req, res, next) {
+  if(req.session?.user) {
+    return next()
+  }
+  else {
+    res.redirect('/login')
+   
+  }
+}
+
+// ---------- Ruta /login te direcciona a la ruta principal si estas logeado, sino carga el formulario ----------
+
+app.get('/login', (req, res) => {
+  const name = req.session?.user
+  if (name) {
+    res.redirect('/')
+  } 
+   knexMySql
+    .from("productos")
+    .select("*")
+    .then((resp) => {
+      res.render("index", { data: resp, user: 'formulario', saludar: false });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+})
+
+// ---------- Metodo post para cargar el usuario ----------
+
+app.post('/login', (req, res)=> {
+  req.session.user = req.body.username
+  res.redirect('/')
+})
+
+// ---------- Ruta /logout te despide si estabas logeado, sino te redirecciona a la ruta principal ----------
+
+app.get('/logout', (req, res) => {
+  const user = req.session.user
+  if (user){
+  req.session.destroy(err => {
+    if(!err) {
+      knexMySql
+    .from("productos")
+    .select("*")
+    .then((resp) => {
+      res.render("index", { data: resp, user: user, saludar: true }); 
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+    }
+    else res.send({status: 'Logout ERROR', body: err})
+  })} else {
+    res.redirect('/')
+  }
+})
+
+//  ---------- Ruta principal con un middleware, si estas logeado carga todo normal, sino el middleware te redirecciona ----------
+
+app.get("/", auth, (req, res) => {
   knexMySql
     .from("productos")
     .select("*")
     .then((resp) => {
-      res.render("index", { data: resp });
+      res.render("index", { data: resp, user: req.session.user, saludar: false });
     })
     .catch((err) => {
       console.log(err);

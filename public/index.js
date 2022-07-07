@@ -1,5 +1,16 @@
 const socket = io();
 
+// LOGIN
+
+const logFetch = async (url) => {
+  const response = await fetch(url, {
+    method: "GET",
+    redirect: 'follow'
+  });
+  console.log(response)
+  return response;
+};
+
 // ------------- PRODUCTOS -------------
 
 socket.on("productos", (data) => {
@@ -92,11 +103,11 @@ const renderMs = (data) => {
     chatSchema,
     data.entities
   );
-  console.log(denormalizedData);
+  // console.log(denormalizedData);
 
   // ------------- RENDERIZADO DE MENSAJES -------------
 
-  let html = denormalizedData
+  let html = data.mensajes // Reemplazar data.mensajes por denormalizedData para usar denormalizacion y ver el backend
     .map((x) => {
       return `
         <div>
