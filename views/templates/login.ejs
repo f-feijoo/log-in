@@ -1,8 +1,6 @@
 <div class="container mt-5">
-    <form onsubmit="return logFetch('/logout').then(result => {alert(result.message)})">
         <h1>Bienvenido <%= user %></h1>
         <br>
         <br>
-        <button type="submit" class="btn btn-success">Log out</button> 
-    </form>
+        <button href="/logout" class="btn btn-success">Log out</button> 
 </div>
