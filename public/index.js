@@ -2,14 +2,14 @@ const socket = io();
 
 // LOGIN
 
-const logFetch = async (url) => {
-  const response = await fetch(url, {
-    method: "GET",
-    redirect: 'follow'
-  });
-  console.log(response)
-  return response;
-};
+// const logFetch = async (url) => {
+//   const response = await fetch(url, {
+//     method: "GET",
+//     redirect: 'follow'
+//   });
+//   console.log(response)
+//   return response;
+// };
 
 // ------------- PRODUCTOS -------------
 
